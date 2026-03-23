@@ -1,0 +1,17 @@
+{
+  "name": "llmconveyors-mcp",
+  "description": "39 tools for the LLM Conveyors AI agent platform. Run Job Hunter, B2B Sales, ATS scoring, resume rendering, and more from any MCP client.",
+  "vendor": "LLM Conveyors",
+  "homepage": "https://llmconveyors.com",
+  "sourceUrl": "https://github.com/ebenezer-isaac/llmconveyors-mcp",
+  "license": "MIT",
+  "runtime": "node",
+  "command": "npx",
+  "args": ["-y", "llmconveyors-mcp"],
+  "env": {
+    "LLMC_API_KEY": {
+      "description": "LLM Conveyors API key (starts with llmc_)",
+      "required": true
+    }
+  }
+}
