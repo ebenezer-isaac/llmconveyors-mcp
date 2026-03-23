@@ -92,7 +92,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
     "api-key-create",
     "Create a new platform API key. The key value is shown ONLY in this response — save it immediately.",
     {
-      name: z.string().describe("Human-readable name for the API key"),
+      label: z.string().describe("Human-readable label for the API key"),
       scopes: z.array(z.enum([
         "jobs:write", "jobs:read", "sales:write", "sales:read",
         "sessions:read", "sessions:write", "settings:read", "settings:write",
@@ -103,9 +103,9 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
     async (params) => {
       try {
         const result = await client.settings.createApiKey({
-          name: params.name,
+          label: params.label,
           scopes: params.scopes,
-        });
+        } as any);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
