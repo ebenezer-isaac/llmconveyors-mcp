@@ -1,6 +1,6 @@
-# @llmconveyors/mcp-server
+# llmconveyors-mcp
 
-[![npm version](https://img.shields.io/npm/v/@llmconveyors/mcp-server.svg)](https://www.npmjs.com/package/@llmconveyors/mcp-server)
+[![npm version](https://img.shields.io/npm/v/llmconveyors-mcp.svg)](https://www.npmjs.com/package/llmconveyors-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
 
@@ -36,7 +36,7 @@ Add to `claude_desktop_config.json`:
   "mcpServers": {
     "llmconveyors": {
       "command": "npx",
-      "args": ["-y", "@llmconveyors/mcp-server"],
+      "args": ["-y", "llmconveyors-mcp"],
       "env": {
         "LLMC_API_KEY": "llmc_your_key_here"
       }
@@ -50,7 +50,7 @@ Add to `claude_desktop_config.json`:
 <summary><strong>Claude Code</strong></summary>
 
 ```bash
-claude mcp add llmconveyors -- npx -y @llmconveyors/mcp-server
+claude mcp add llmconveyors -- npx -y llmconveyors-mcp
 ```
 
 Set the env var in your shell or `.env`:
@@ -69,7 +69,7 @@ Add to `.cursor/mcp.json`:
   "mcpServers": {
     "llmconveyors": {
       "command": "npx",
-      "args": ["-y", "@llmconveyors/mcp-server"],
+      "args": ["-y", "llmconveyors-mcp"],
       "env": {
         "LLMC_API_KEY": "llmc_your_key_here"
       }
@@ -89,7 +89,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
   "mcpServers": {
     "llmconveyors": {
       "command": "npx",
-      "args": ["-y", "@llmconveyors/mcp-server"],
+      "args": ["-y", "llmconveyors-mcp"],
       "env": {
         "LLMC_API_KEY": "llmc_your_key_here"
       }
