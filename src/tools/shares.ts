@@ -5,13 +5,17 @@ import { z } from "zod";
 export function registerSharesTools(server: McpServer, client: LLMConveyors): void {
   server.tool(
     "share-create",
-    "Create a shareable public link for generated content. Returns a slug for the public URL.",
+    "Create a shareable public link for a generation's artifacts. Returns a slug and public URL.",
     {
-      body: z.record(z.unknown()).describe("Share configuration (content to share, options)"),
+      sessionId: z.string().describe("Session ID containing the generation"),
+      generationId: z.string().describe("Generation ID to share"),
     },
     async (params) => {
       try {
-        const result = await client.shares.create(params.body);
+        const result = await client.shares.create({
+          sessionId: params.sessionId,
+          generationId: params.generationId,
+        } as any);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
