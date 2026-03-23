@@ -1,13 +1,18 @@
 {
   "name": "@llmconveyors/mcp-server",
   "version": "0.1.0",
-  "description": "MCP server exposing LLM Conveyors skills as tools for AI agents",
+  "description": "MCP server that connects AI agents to LLM Conveyors — run Job Hunter, B2B Sales, and other AI agents from Claude, Cursor, or any MCP client",
   "type": "module",
   "bin": {
     "llmconveyors-mcp": "./dist/index.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean",
     "dev": "tsup src/index.ts --format esm --watch",
@@ -17,13 +22,29 @@
   },
   "keywords": [
     "mcp",
+    "mcp-server",
+    "model-context-protocol",
     "llm-conveyors",
-    "ai-tools",
+    "ai-agents",
     "claude",
-    "model-context-protocol"
+    "cursor",
+    "job-hunting",
+    "resume",
+    "ats",
+    "b2b-sales",
+    "cold-email",
+    "ai-tools"
   ],
-  "author": "LLM Conveyors",
+  "author": "LLM Conveyors <hello@llmconveyors.com> (https://llmconveyors.com)",
   "license": "MIT",
+  "homepage": "https://github.com/llmconveyors/mcp-server#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/llmconveyors/mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/llmconveyors/mcp-server/issues"
+  },
   "engines": {
     "node": ">=18.0.0"
   },
