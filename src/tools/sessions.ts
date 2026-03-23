@@ -5,17 +5,15 @@ import { z } from "zod";
 export function registerSessionTools(server: McpServer, client: LLMConveyors): void {
   server.tool(
     "session-create",
-    "Create a new session for an agent. Returns the created session object.",
+    "Create a new session. Returns the created session object with its ID.",
     {
-      agentType: z.string().describe("Agent type (e.g. job-hunter, b2b-sales)"),
-      metadata: z.record(z.unknown()).optional().describe("Optional session metadata"),
+      metadata: z.record(z.unknown()).optional().describe("Optional session metadata (e.g. agentType, source)"),
     },
     async (params) => {
       try {
         const result = await client.sessions.create({
-          agentType: params.agentType,
           metadata: params.metadata,
-        });
+        } as any);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);

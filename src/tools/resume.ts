@@ -117,17 +117,17 @@ export function registerResumeTools(server: McpServer, client: LLMConveyors): vo
     "master-resume-create",
     "Create a new master resume. Returns the saved master resume with its ID.",
     {
-      name: z.string().describe("Name for this master resume"),
-      resume: z.record(z.unknown()).describe("Resume object in JSON Resume format"),
-      metadata: z.record(z.unknown()).optional().describe("Optional metadata"),
+      label: z.string().describe("Label/name for this master resume"),
+      rawText: z.string().describe("Raw resume text content"),
+      isDefault: z.boolean().optional().describe("Set as default master resume"),
     },
     async (params) => {
       try {
         const result = await client.resume.createMaster({
-          name: params.name,
-          resume: params.resume,
-          metadata: params.metadata,
-        });
+          label: params.label,
+          rawText: params.rawText,
+          isDefault: params.isDefault,
+        } as any);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -173,17 +173,17 @@ export function registerResumeTools(server: McpServer, client: LLMConveyors): vo
     "Update a master resume by ID. Returns the updated master resume.",
     {
       id: z.string().describe("Master resume ID"),
-      name: z.string().optional().describe("Updated name"),
-      resume: z.record(z.unknown()).optional().describe("Updated resume object"),
-      metadata: z.record(z.unknown()).optional().describe("Updated metadata"),
+      label: z.string().optional().describe("Updated label/name"),
+      rawText: z.string().optional().describe("Updated raw resume text"),
+      isDefault: z.boolean().optional().describe("Set as default master resume"),
     },
     async (params) => {
       try {
         const result = await client.resume.updateMaster(params.id, {
-          name: params.name,
-          resume: params.resume,
-          metadata: params.metadata,
-        });
+          label: params.label,
+          rawText: params.rawText,
+          isDefault: params.isDefault,
+        } as any);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
