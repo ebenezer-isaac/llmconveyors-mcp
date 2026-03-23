@@ -37,13 +37,13 @@
   ],
   "author": "LLM Conveyors <hello@llmconveyors.com> (https://llmconveyors.com)",
   "license": "MIT",
-  "homepage": "https://github.com/llmconveyors/mcp-server#readme",
+  "homepage": "https://github.com/llmconveyors/llmconveyors-mcp#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/llmconveyors/mcp-server.git"
+    "url": "git+https://github.com/llmconveyors/llmconveyors-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/llmconveyors/mcp-server/issues"
+    "url": "https://github.com/llmconveyors/llmconveyors-mcp/issues"
   },
   "engines": {
     "node": ">=18.0.0"
