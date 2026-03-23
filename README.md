@@ -207,7 +207,7 @@ Your API key needs the right scopes for the tools you want to use:
 ## Development
 
 ```bash
-git clone https://github.com/llmconveyors/llmconveyors-mcp.git
+git clone https://github.com/ebenezer-isaac/llmconveyors-mcp.git
 cd llmconveyors-mcp
 npm install
 npm run build
