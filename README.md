@@ -10,6 +10,8 @@ MCP server that connects AI agents to the [LLM Conveyors](https://llmconveyors.c
   <img src="https://llmconveyors.com/assets/logo.png" alt="LLM Conveyors" width="200" />
 </p>
 
+[![llmconveyors-mcp MCP server](https://glama.ai/mcp/servers/ebenezer-isaac/llmconveyors-mcp/badges/card.svg)](https://glama.ai/mcp/servers/ebenezer-isaac/llmconveyors-mcp)
+
 ## What is LLM Conveyors?
 
 A community-driven AI agent platform with pay-per-action pricing ($1–5 per completed action). Instead of $100/mo SaaS subscriptions, you pay only for real outputs — a resume scored, a company researched, a cold email generated.
