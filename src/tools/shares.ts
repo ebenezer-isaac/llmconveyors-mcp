@@ -55,4 +55,24 @@ export function registerSharesTools(server: McpServer, client: LLMConveyors): vo
       }
     },
   );
+
+  server.tool(
+    "share-slug-stats",
+    "Get visit statistics for a specific share link (owner only).",
+    {
+      slug: z.string().describe("Share link slug"),
+    },
+    async (params) => {
+      try {
+        const httpClient = (client.shares as any).httpClient;
+        const result = await httpClient.request(
+          `/shares/${encodeURIComponent(params.slug)}/stats`,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+      }
+    },
+  );
 }

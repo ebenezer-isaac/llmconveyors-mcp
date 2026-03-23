@@ -4,6 +4,31 @@ import { z } from "zod";
 
 export function registerResumeTools(server: McpServer, client: LLMConveyors): void {
   server.tool(
+    "resume-parse",
+    "Parse a resume file into structured JSON Resume format. Accepts base64-encoded file content.",
+    {
+      fileBase64: z.string().describe("Base64-encoded resume file (PDF, DOCX, TXT)"),
+      filename: z.string().describe("Original filename with extension"),
+      contentType: z.string().optional().describe("MIME type (e.g. application/pdf)"),
+      mode: z.enum(["fast", "thorough"]).optional().describe("Parsing mode: fast for speed, thorough for accuracy"),
+    },
+    async (params) => {
+      try {
+        const buffer = Buffer.from(params.fileBase64, "base64");
+        const result = await client.resume.parse(buffer, {
+          filename: params.filename,
+          contentType: params.contentType,
+          mode: params.mode,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+      }
+    },
+  );
+
+  server.tool(
     "resume-validate",
     "Validate a resume in JSON Resume format. Returns validation errors and warnings.",
     {

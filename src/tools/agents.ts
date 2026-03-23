@@ -82,6 +82,51 @@ export function registerAgentTools(server: McpServer, client: LLMConveyors): voi
     },
   );
 
+  // --- Agent interact (phased workflows) ---
+  server.tool(
+    "agent-interact",
+    "Submit a response to a phased agent workflow that is awaiting input. Used when agent-status returns awaiting_input.",
+    {
+      agentType: z.enum(["job-hunter"]).describe("Agent type (only job-hunter supports phasing)"),
+      generationId: z.string().describe("Generation ID from the run or status response"),
+      sessionId: z.string().describe("Session ID from the run or status response"),
+      interactionType: z.string().describe("Interaction type from the awaiting_input response"),
+      interactionData: z.record(z.unknown()).describe("Response data for the interaction"),
+    },
+    async (params) => {
+      try {
+        const result = await client.agents.interact(params.agentType, {
+          generationId: params.generationId,
+          sessionId: params.sessionId,
+          interactionType: params.interactionType,
+          interactionData: params.interactionData,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+      }
+    },
+  );
+
+  // --- Generate CV (synchronous, no streaming) ---
+  server.tool(
+    "generate-cv",
+    "Generate a CV synchronously without running the full Job Hunter pipeline. Faster but produces only a CV, no cover letter or cold email.",
+    {
+      body: z.record(z.unknown()).describe("CV generation parameters (resume data, job details, theme)"),
+    },
+    async (params) => {
+      try {
+        const result = await client.agents.generateCv(params.body);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+      }
+    },
+  );
+
   // --- Agent manifest ---
   server.tool(
     "agent-manifest",

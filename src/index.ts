@@ -12,6 +12,7 @@ import { registerSettingsTools } from "./tools/settings.js";
 import { registerContentTools } from "./tools/content.js";
 import { registerSharesTools } from "./tools/shares.js";
 import { registerDocumentTools } from "./tools/documents.js";
+import { registerReferralTools } from "./tools/referral.js";
 
 const apiKey = process.env.LLMC_API_KEY;
 if (!apiKey) {
@@ -23,7 +24,7 @@ const client = new LLMConveyors({ apiKey });
 
 const server = new McpServer({
   name: "llmconveyors",
-  version: "0.1.0",
+  version: "0.2.0",
 });
 
 // Register all tool groups
@@ -36,6 +37,7 @@ registerSettingsTools(server, client);
 registerContentTools(server, client);
 registerSharesTools(server, client);
 registerDocumentTools(server, client);
+registerReferralTools(server, client);
 
 // Start server
 const transport = new StdioServerTransport();

@@ -109,7 +109,7 @@ Ask your AI agent:
 
 > "Research Stripe and draft a B2B cold email for our developer tools product."
 
-## Available Tools (39)
+## Available Tools (53)
 
 ### Agents
 | Tool | Description |
@@ -117,11 +117,14 @@ Ask your AI agent:
 | `job-hunter-run` | Run the Job Hunter agent — generates tailored CV, cover letter, and cold email |
 | `b2b-sales-run` | Run the B2B Sales agent — researches a company and generates sales outreach |
 | `agent-status` | Check the status of a running agent job |
+| `agent-interact` | Submit a response to a phased agent workflow awaiting input |
+| `generate-cv` | Generate a CV synchronously (faster, CV only) |
 | `agent-manifest` | Get input fields, capabilities, and billing info for an agent |
 
 ### Resume
 | Tool | Description |
 |------|-------------|
+| `resume-parse` | Parse a resume file into structured JSON Resume format |
 | `resume-validate` | Validate a resume in JSON Resume format |
 | `resume-render` | Render a resume to PDF |
 | `resume-preview` | Preview a resume as HTML |
@@ -157,6 +160,7 @@ Ask your AI agent:
 | `session-list` | List sessions with optional filtering |
 | `session-get` | Get a session by ID |
 | `session-hydrate` | Get full session with artifacts and logs |
+| `session-download` | Download an artifact from a session by storage key |
 | `session-delete` | Delete a session |
 
 ### Settings & API Keys
@@ -171,6 +175,12 @@ Ask your AI agent:
 | `api-key-list` | List all API keys |
 | `api-key-revoke` | Revoke an API key |
 | `api-key-rotate` | Rotate an API key |
+| `api-key-usage` | Get usage statistics for a specific API key |
+| `byo-key-get` | Check if a Bring Your Own API key is configured |
+| `byo-key-set` | Set a BYO API key for a provider (e.g. Gemini) |
+| `byo-key-remove` | Remove the configured BYO API key |
+| `webhook-secret-get` | Get the current webhook secret |
+| `webhook-secret-rotate` | Rotate the webhook secret |
 
 ### Content & Sharing
 | Tool | Description |
@@ -180,6 +190,14 @@ Ask your AI agent:
 | `share-create` | Create a public share link for generated content |
 | `share-stats` | Get share link statistics |
 | `share-get-public` | Get a public share by slug |
+| `share-slug-stats` | Get visit statistics for a specific share link |
+
+### Referral
+| Tool | Description |
+|------|-------------|
+| `referral-stats` | Get referral program statistics |
+| `referral-code` | Get your referral code |
+| `referral-vanity-code` | Set a custom vanity referral code |
 
 ### Documents
 | Tool | Description |

@@ -80,6 +80,25 @@ export function registerSessionTools(server: McpServer, client: LLMConveyors): v
   );
 
   server.tool(
+    "session-download",
+    "Download an artifact from a session by its storage key.",
+    {
+      id: z.string().describe("Session ID"),
+      key: z.string().describe("Artifact storage key from session hydration"),
+    },
+    async (params) => {
+      try {
+        const response = await client.sessions.download(params.id, params.key);
+        const text = await response.text();
+        return { content: [{ type: "text", text }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+      }
+    },
+  );
+
+  server.tool(
     "session-delete",
     "Delete a session by ID.",
     {

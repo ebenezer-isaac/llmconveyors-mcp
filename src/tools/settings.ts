@@ -162,4 +162,105 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
       }
     },
   );
+
+  server.tool(
+    "api-key-usage",
+    "Get usage statistics for a specific API key by its hash.",
+    {
+      hash: z.string().describe("API key hash"),
+    },
+    async (params) => {
+      try {
+        const httpClient = (client.settings as any).httpClient;
+        const result = await httpClient.request(
+          `/settings/platform-api-keys/${encodeURIComponent(params.hash)}/usage`,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+      }
+    },
+  );
+
+  server.tool(
+    "byo-key-get",
+    "Check if a Bring Your Own API key is configured and its status.",
+    {},
+    async () => {
+      try {
+        const result = await client.settings.getByoKey();
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+      }
+    },
+  );
+
+  server.tool(
+    "byo-key-set",
+    "Set a Bring Your Own API key for a provider (e.g. Gemini). Enables unlimited usage outside the credit system.",
+    {
+      apiKey: z.string().describe("The API key to set"),
+      provider: z.string().describe("Provider name (e.g. gemini)"),
+    },
+    async (params) => {
+      try {
+        const result = await client.settings.setByoKey({
+          apiKey: params.apiKey,
+          provider: params.provider,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+      }
+    },
+  );
+
+  server.tool(
+    "byo-key-remove",
+    "Remove the configured Bring Your Own API key.",
+    {},
+    async () => {
+      try {
+        await client.settings.removeByoKey();
+        return { content: [{ type: "text", text: JSON.stringify({ removed: true }) }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+      }
+    },
+  );
+
+  server.tool(
+    "webhook-secret-get",
+    "Get the current webhook secret for verifying webhook signatures.",
+    {},
+    async () => {
+      try {
+        const result = await client.settings.getWebhookSecret();
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+      }
+    },
+  );
+
+  server.tool(
+    "webhook-secret-rotate",
+    "Rotate the webhook secret. The old secret remains valid for a grace period.",
+    {},
+    async () => {
+      try {
+        const result = await client.settings.rotateWebhookSecret();
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+      }
+    },
+  );
 }
