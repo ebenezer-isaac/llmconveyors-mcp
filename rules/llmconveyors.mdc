@@ -1,0 +1,34 @@
+---
+description: Guidelines for using LLM Conveyors MCP tools effectively
+globs: *
+---
+
+# LLM Conveyors MCP Usage Rules
+
+## API Key
+- The LLMC_API_KEY environment variable must be set with a key starting with `llmc_`
+- Different tools require different API key scopes. If you get a scope error, tell the user which scope is needed.
+
+## Agent runs
+- `job-hunter-run` and `b2b-sales-run` take 1-10 minutes to complete. Let the user know it will take a moment.
+- These tools consume credits. Always confirm with the user before running an agent.
+- Agent runs return a `sessionId` and `generationId` that can be used with `session-hydrate`, `share-create`, and `document-download`.
+
+## Resume format
+- `resume-validate`, `resume-render`, and `resume-preview` expect JSON Resume format (an object with `basics`, `work`, `education`, `skills` sections).
+- `ats-score` expects plain text strings, not JSON objects.
+- Master resumes use `label` (name) and `rawText` (plain text content), not JSON Resume format.
+
+## File uploads
+- `upload-resume` and `upload-job-file` accept base64-encoded file content. Encode the file bytes to base64 before calling.
+- `upload-job-text` accepts plain text directly, no encoding needed.
+
+## Sessions
+- `session-create` takes no required parameters. Metadata is optional.
+- `session-hydrate` returns the full session with all artifacts and logs. Use this to retrieve generation results.
+- Always clean up test sessions with `session-delete` when done.
+
+## Content and sharing
+- `content-save` requires `docType` (one of: original_cv, extensive_cv, cover_letter, cv_strategy, cover_letter_strategy, cold_email_strategy, recon_strategy, company_context) and `content` (string).
+- `content-delete-generation` requires both the generation `id` and the `sessionId`.
+- `share-create` requires `sessionId` and `generationId`. Share links are rate-limited to 1 per week.
