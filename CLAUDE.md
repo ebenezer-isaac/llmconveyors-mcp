@@ -1,6 +1,6 @@
-# @llmconveyors/mcp-server
+# llmconveyors-mcp
 
-MCP server that exposes all LLM Conveyors platform capabilities as tools for AI agents (Claude Code, Claude Desktop, Cursor, etc.).
+MCP server that exposes all LLM Conveyors platform capabilities as 66 tools for AI agents (Claude Code, Claude Desktop, Cursor, etc.).
 
 ## Architecture
 
@@ -8,99 +8,163 @@ MCP server that exposes all LLM Conveyors platform capabilities as tools for AI 
 - **Transport**: stdio (standard for MCP servers)
 - **SDK**: Uses the `llmconveyors` npm package (TypeScript SDK) as the API client
 - **Auth**: `LLMC_API_KEY` env var (prefix `llmc_`)
+- **Base URL override**: Optional `LLMC_BASE_URL` env var
 
 ## Project Structure
 
 ```
 src/
-  index.ts              — Entry point: creates MCP server, wires up all tool groups
+  index.ts              — Entry point: creates MCP server, wires up all 12 tool groups
+  utils/
+    error-handler.ts    — Shared error handler (LLMConveyorsError, RateLimitError)
   tools/
-    agents.ts           — FULLY IMPLEMENTED (pattern to follow for all others)
-    ats.ts              — FULLY IMPLEMENTED
-    resume.ts           — Stub (TODO)
-    upload.ts           — Stub (TODO)
-    sessions.ts         — Stub (TODO)
-    settings.ts         — Stub (TODO)
-    content.ts          — Stub (TODO)
-    shares.ts           — Stub (TODO)
-    documents.ts        — Stub (TODO)
+    agents.ts           — FULLY IMPLEMENTED (6 tools)
+    ats.ts              — FULLY IMPLEMENTED (1 tool)
+    resume.ts           — FULLY IMPLEMENTED (12 tools)
+    upload.ts           — FULLY IMPLEMENTED (3 tools)
+    sessions.ts         — FULLY IMPLEMENTED (8 tools)
+    settings.ts         — FULLY IMPLEMENTED (15 tools)
+    content.ts          — FULLY IMPLEMENTED (6 tools)
+    shares.ts           — FULLY IMPLEMENTED (4 tools)
+    documents.ts        — FULLY IMPLEMENTED (1 tool)
+    referral.ts         — FULLY IMPLEMENTED (3 tools)
+    privacy.ts          — FULLY IMPLEMENTED (3 tools)
+    health.ts           — FULLY IMPLEMENTED (4 tools)
 ```
+
+## Shared Utilities
+
+### `src/utils/error-handler.ts`
+
+All tool handlers use `handleToolError(err)` instead of inline try/catch formatting. It:
+
+- Extracts structured fields from `LLMConveyorsError` (code, statusCode, hint, details, requestId, retryable)
+- Extracts `retryAfterMs` and `rateLimitInfo` from `RateLimitError`
+- Falls back to plain error message for unknown errors
+- Always returns `{ content, isError: true }` in MCP format
 
 ## How to implement a tool
 
-Follow the exact pattern in `src/tools/agents.ts` and `src/tools/ats.ts`:
+Follow the pattern established across all tool files:
 
 1. Each tool file exports a `register*Tools(server, client)` function
 2. Call `server.tool(name, description, zodSchema, handler)` for each tool
 3. The handler receives validated params, calls the SDK client, returns MCP content
-4. Always wrap in try/catch, return `{ isError: true }` on failure
+4. Always wrap in try/catch, use `handleToolError(err)` from `src/utils/error-handler.ts`
 5. Use `z.record(z.unknown())` for complex JSON objects the user provides
 6. Return JSON.stringify'd results as text content
 
-## Complete tool list to implement
+## Complete tool list (66 tools)
 
 Reference the `llmconveyors` SDK types (node_modules/llmconveyors/dist/index.d.ts) for exact method signatures.
 
-### agents.ts (DONE)
-- [x] `job-hunter-run` → `client.agents.run('job-hunter', ...)`
-- [x] `b2b-sales-run` → `client.agents.run('b2b-sales', ...)`
-- [x] `agent-status` → `client.agents.getStatus(...)`
-- [x] `agent-manifest` → `client.agents.getManifest(...)`
+### agents.ts (DONE - 6 tools)
+- [x] `job-hunter-run` - Run the Job Hunter agent
+- [x] `b2b-sales-run` - Run the B2B Sales agent
+- [x] `agent-status` - Get agent run status
+- [x] `agent-interact` - Send interaction to a running agent
+- [x] `job-hunter-generate-cv` - Generate a tailored CV
+- [x] `agent-manifest` - Get agent manifest/capabilities
 
-### ats.ts (DONE)
-- [x] `ats-score` → `client.ats.score(...)`
+### ats.ts (DONE - 1 tool)
+- [x] `ats-score` - Score a resume against a job description
 
-### resume.ts
-- [ ] `resume-validate` → `client.resume.validate(body)`
-- [ ] `resume-render` → `client.resume.render(body)` — returns PDF URL
-- [ ] `resume-preview` → `client.resume.preview(body)` — returns HTML
-- [ ] `resume-themes` → `client.resume.themes()` — no params
-- [ ] `resume-import-rx` → `client.resume.importRxResume(body)`
-- [ ] `resume-export-rx` → `client.resume.exportRxResume(body)`
-- [ ] `master-resume-create` → `client.resume.createMaster(body)`
-- [ ] `master-resume-list` → `client.resume.listMasters()` — no params
-- [ ] `master-resume-get` → `client.resume.getMaster(id)`
-- [ ] `master-resume-update` → `client.resume.updateMaster(id, body)`
-- [ ] `master-resume-delete` → `client.resume.deleteMaster(id)`
+### resume.ts (DONE - 12 tools)
+- [x] `resume-parse` - Parse a resume from uploaded file
+- [x] `resume-validate` - Validate resume data
+- [x] `resume-render` - Render resume to PDF (returns URL)
+- [x] `resume-preview` - Preview resume as HTML
+- [x] `resume-themes` - List available resume themes
+- [x] `resume-import-rx` - Import from Reactive Resume format
+- [x] `resume-export-rx` - Export to Reactive Resume format
+- [x] `master-resume-create` - Create a master resume
+- [x] `master-resume-list` - List all master resumes
+- [x] `master-resume-get` - Get a master resume by ID
+- [x] `master-resume-update` - Update a master resume
+- [x] `master-resume-delete` - Delete a master resume
 
-### upload.ts
-- [ ] `upload-job-text` → `client.upload.jobText({ text, source? })`
+### upload.ts (DONE - 3 tools)
+- [x] `upload-resume` - Upload a resume file (base64-encoded)
+- [x] `upload-job-file` - Upload a job description file (base64-encoded)
+- [x] `upload-job-text` - Upload job description as plain text
 
-Note: `upload-resume` and `upload-job-file` require file bytes. MCP tools receive JSON params, so accept base64-encoded file content as a string param, decode to Buffer, then pass to the SDK. Example:
-```ts
-const buffer = Buffer.from(params.fileBase64, "base64");
-await client.upload.resume(buffer, { filename: params.filename });
-```
+### sessions.ts (DONE - 8 tools)
+- [x] `session-create` - Create a new agent session
+- [x] `session-list` - List sessions with pagination/filtering
+- [x] `session-get` - Get session by ID
+- [x] `session-hydrate` - Get full session with all artifacts
+- [x] `session-download` - Download session artifacts
+- [x] `session-delete` - Delete a session
+- [x] `session-init` - Initialize a session
+- [x] `session-log` - Log an event to a session
 
-### sessions.ts
-- [ ] `session-create` → `client.sessions.create({ agentType, metadata? })`
-- [ ] `session-list` → `client.sessions.list({ page?, limit?, agentType? })`
-- [ ] `session-get` → `client.sessions.get(id)`
-- [ ] `session-hydrate` → `client.sessions.hydrate(id)` — full session with artifacts
-- [ ] `session-delete` → `client.sessions.delete(id)`
+### settings.ts (DONE - 15 tools)
+- [x] `settings-profile` - Get user profile
+- [x] `settings-preferences-get` - Get user preferences
+- [x] `settings-preferences-update` - Update user preferences
+- [x] `settings-usage-summary` - Get usage summary
+- [x] `settings-usage-logs` - Get usage logs with pagination
+- [x] `api-key-create` - Create a new API key
+- [x] `api-key-list` - List all API keys
+- [x] `api-key-revoke` - Revoke an API key
+- [x] `api-key-rotate` - Rotate an API key
+- [x] `api-key-usage` - Get usage stats for an API key
+- [x] `byo-key-get` - Get bring-your-own-key configuration
+- [x] `byo-key-set` - Set a BYO provider key
+- [x] `byo-key-remove` - Remove a BYO provider key
+- [x] `webhook-secret-get` - Get webhook signing secret
+- [x] `webhook-secret-rotate` - Rotate webhook signing secret
 
-### settings.ts
-- [ ] `settings-profile` → `client.settings.getProfile()`
-- [ ] `settings-preferences-get` → `client.settings.getPreferences()`
-- [ ] `settings-preferences-update` → `client.settings.updatePreferences({ preferences })`
-- [ ] `settings-usage-summary` → `client.settings.getUsageSummary()`
-- [ ] `settings-usage-logs` → `client.settings.getUsageLogs({ offset?, limit? })`
-- [ ] `api-key-create` → `client.settings.createApiKey({ name, scopes })`
-- [ ] `api-key-list` → `client.settings.listApiKeys()`
-- [ ] `api-key-revoke` → `client.settings.revokeApiKey(hash)`
-- [ ] `api-key-rotate` → `client.settings.rotateApiKey(hash)`
+### content.ts (DONE - 6 tools)
+- [x] `content-save` - Save generated content
+- [x] `content-delete-generation` - Delete a content generation
+- [x] `content-research-sender` - Research a sender for outreach
+- [x] `content-list-sources` - List content sources
+- [x] `content-get-source` - Get a content source by ID
+- [x] `content-delete-source` - Delete a content source
 
-### content.ts
-- [ ] `content-save` → `client.content.save(body)`
-- [ ] `content-delete-generation` → `client.content.deleteGeneration(id)`
+### shares.ts (DONE - 4 tools)
+- [x] `share-create` - Create a shareable link
+- [x] `share-stats` - Get sharing stats for current user
+- [x] `share-get-public` - Get a public share by slug
+- [x] `share-slug-stats` - Get view stats for a specific share slug
 
-### shares.ts
-- [ ] `share-create` → `client.shares.create(body)`
-- [ ] `share-stats` → `client.shares.getStats()`
-- [ ] `share-get-public` → `client.shares.getPublic(slug)`
+### documents.ts (DONE - 1 tool)
+- [x] `document-download` - Download a document by path
 
-### documents.ts
-- [ ] `document-download` → `client.documents.download(path)` — returns file URL/content
+### referral.ts (DONE - 3 tools)
+- [x] `referral-stats` - Get referral stats
+- [x] `referral-code` - Get referral code
+- [x] `referral-vanity-code` - Set a vanity referral code
+
+### privacy.ts (DONE - 3 tools)
+- [x] `privacy-list-consents` - List all consent records
+- [x] `privacy-grant-consent` - Grant consent for a purpose
+- [x] `privacy-revoke-consent` - Revoke consent for a purpose
+
+### health.ts (DONE - 4 tools)
+- [x] `health-root` - Root health endpoint
+- [x] `health-check` - Detailed health check
+- [x] `health-ready` - Readiness probe
+- [x] `health-live` - Liveness probe
+
+## SDK Bypasses
+
+Some tools use the SDK's private `httpClient` directly because the public SDK surface does not expose these endpoints:
+
+- **`api-key-usage`** - `GET /api-keys/:hash/usage`
+- **`share-slug-stats`** - `GET /shares/:slug/stats`
+- **`content-delete-generation`** - `DELETE /content/generations/:id`
+
+Additionally, 4 content tools (`content-research-sender`, `content-list-sources`, `content-get-source`, `content-delete-source`) use `httpClient` for endpoints not yet in the SDK.
+
+## Intentional Omissions
+
+The following SDK capabilities are intentionally not exposed as MCP tools:
+
+- **Streaming (SSE)**: MCP stdio transport is incompatible with server-sent events. Agent runs that support streaming use polling via `agent-status` instead.
+- **Auth export/delete**: Session-only operations that don't make sense in an API-key-authenticated MCP context.
+- **Client-side logging/telemetry**: These are client-side SDK concerns, not server-side tool operations.
 
 ## Tool naming convention
 - Kebab-case: `resource-action` (e.g., `master-resume-create`, `ats-score`)
@@ -123,7 +187,7 @@ LLMC_API_KEY=llmc_test node dist/index.js
   "mcpServers": {
     "llmconveyors": {
       "command": "npx",
-      "args": ["-y", "@llmconveyors/mcp-server"],
+      "args": ["-y", "llmconveyors-mcp"],
       "env": { "LLMC_API_KEY": "llmc_..." }
     }
   }

@@ -1,6 +1,6 @@
 {
   "name": "llmconveyors-mcp",
-  "description": "39 tools for the LLM Conveyors AI agent platform. Run Job Hunter, B2B Sales, ATS scoring, resume rendering, and more from any MCP client.",
+  "description": "66 tools for the LLM Conveyors AI agent platform. Run Job Hunter, B2B Sales, ATS scoring, resume rendering, session management, privacy controls, health checks, and more from any MCP client.",
   "vendor": "LLM Conveyors",
   "homepage": "https://llmconveyors.com",
   "sourceUrl": "https://github.com/ebenezer-isaac/llmconveyors-mcp",

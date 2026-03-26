@@ -1,11 +1,12 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { LLMConveyors } from "llmconveyors";
 import { z } from "zod";
+import { handleToolError } from "../utils/error-handler.js";
 
 export function registerResumeTools(server: McpServer, client: LLMConveyors): void {
   server.tool(
     "resume-parse",
-    "Parse a resume file into structured JSON Resume format. Accepts base64-encoded file content.",
+    "Parse a resume file into structured JSON Resume format. Accepts base64-encoded file content. Requires scope: resume:write.",
     {
       fileBase64: z.string().describe("Base64-encoded resume file (PDF, DOCX, TXT)"),
       filename: z.string().describe("Original filename with extension"),
@@ -22,15 +23,14 @@ export function registerResumeTools(server: McpServer, client: LLMConveyors): vo
         });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+        return handleToolError(err);
       }
     },
   );
 
   server.tool(
     "resume-validate",
-    "Validate a resume in JSON Resume format. Returns validation errors and warnings.",
+    "Validate a resume in JSON Resume format. Returns validation errors and warnings. Requires scope: resume:write.",
     {
       resume: z.record(z.unknown()).describe("Resume object in JSON Resume format"),
     },
@@ -39,41 +39,39 @@ export function registerResumeTools(server: McpServer, client: LLMConveyors): vo
         const result = await client.resume.validate({ resume: params.resume });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+        return handleToolError(err);
       }
     },
   );
 
   server.tool(
     "resume-render",
-    "Render a resume to PDF. Returns a URL to download the generated PDF.",
+    "Render a resume to PDF or HTML. Returns a URL to download the generated file. Requires scope: resume:write.",
     {
       resume: z.record(z.unknown()).describe("Resume object in JSON Resume format"),
-      theme: z.string().optional().describe("Theme name (e.g. Even, StackOverflow, Class, Professional)"),
-      format: z.string().optional().describe("Output format"),
+      theme: z.string().describe("Theme name (e.g. even, stackoverflow, class, professional, elegant, macchiato, react, academic)"),
+      format: z.enum(["pdf", "html"]).optional().describe("Output format: pdf (default) or html"),
     },
     async (params) => {
       try {
         const result = await client.resume.render({
           resume: params.resume,
           theme: params.theme,
-          format: params.format,
+          ...(params.format != null && { format: params.format }),
         });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+        return handleToolError(err);
       }
     },
   );
 
   server.tool(
     "resume-preview",
-    "Preview a resume as HTML. Returns rendered HTML string.",
+    "Preview a resume as HTML. Returns rendered HTML string. Requires scope: resume:write.",
     {
       resume: z.record(z.unknown()).describe("Resume object in JSON Resume format"),
-      theme: z.string().optional().describe("Theme name"),
+      theme: z.string().describe("Theme name (e.g. even, stackoverflow, class, professional)"),
     },
     async (params) => {
       try {
@@ -83,30 +81,28 @@ export function registerResumeTools(server: McpServer, client: LLMConveyors): vo
         });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+        return handleToolError(err);
       }
     },
   );
 
   server.tool(
     "resume-themes",
-    "List all available resume themes. Returns theme IDs, names, and descriptions.",
+    "List all available resume themes. Returns theme IDs, names, and descriptions. Requires scope: resume:read.",
     {},
     async () => {
       try {
         const result = await client.resume.themes();
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+        return handleToolError(err);
       }
     },
   );
 
   server.tool(
     "resume-import-rx",
-    "Import a resume from Reactive Resume (RxResume) format into JSON Resume format.",
+    "Import a resume from Reactive Resume (RxResume) format into JSON Resume format. Requires scope: resume:write.",
     {
       data: z.record(z.unknown()).describe("RxResume data object to import"),
     },
@@ -115,70 +111,70 @@ export function registerResumeTools(server: McpServer, client: LLMConveyors): vo
         const result = await client.resume.importRxResume({ data: params.data });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+        return handleToolError(err);
       }
     },
   );
 
   server.tool(
     "resume-export-rx",
-    "Export a JSON Resume to Reactive Resume (RxResume) format.",
+    "Export a JSON Resume to Reactive Resume (RxResume) format. Requires scope: resume:read.",
     {
       resume: z.record(z.unknown()).describe("Resume object in JSON Resume format"),
+      designBlob: z.record(z.unknown()).optional().describe("Optional design/styling configuration"),
     },
     async (params) => {
       try {
-        const result = await client.resume.exportRxResume({ resume: params.resume });
+        const result = await client.resume.exportRxResume({
+          resume: params.resume,
+          ...(params.designBlob != null && { designBlob: params.designBlob }),
+        });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+        return handleToolError(err);
       }
     },
   );
 
   server.tool(
     "master-resume-create",
-    "Create a new master resume. Returns the saved master resume with its ID.",
+    "Create a new master resume. Returns the saved master resume with its ID. Requires scope: resume:write.",
     {
-      label: z.string().describe("Label/name for this master resume"),
-      rawText: z.string().describe("Raw resume text content"),
-      isDefault: z.boolean().optional().describe("Set as default master resume"),
+      name: z.string().describe("Name/label for this master resume"),
+      resume: z.record(z.unknown()).describe("Resume data object (structured JSON Resume or raw text in a wrapper)"),
+      metadata: z.record(z.unknown()).optional().describe("Optional metadata for the master resume"),
     },
     async (params) => {
       try {
         const result = await client.resume.createMaster({
-          label: params.label,
-          rawText: params.rawText,
-          isDefault: params.isDefault,
-        } as any);
+          name: params.name,
+          resume: params.resume,
+          ...(params.metadata != null && { metadata: params.metadata }),
+        });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+        return handleToolError(err);
       }
     },
   );
 
   server.tool(
     "master-resume-list",
-    "List all master resumes. Returns an array of master resume objects.",
+    "List all master resumes. Returns an array of master resume objects. Requires scope: resume:read.",
     {},
     async () => {
       try {
         const result = await client.resume.listMasters();
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+        return handleToolError(err);
       }
     },
   );
 
   server.tool(
     "master-resume-get",
-    "Get a master resume by ID. Returns the full master resume object.",
+    "Get a master resume by ID. Returns the full master resume object. Requires scope: resume:read.",
     {
       id: z.string().describe("Master resume ID"),
     },
@@ -187,49 +183,46 @@ export function registerResumeTools(server: McpServer, client: LLMConveyors): vo
         const result = await client.resume.getMaster(params.id);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+        return handleToolError(err);
       }
     },
   );
 
   server.tool(
     "master-resume-update",
-    "Update a master resume by ID. Returns the updated master resume.",
+    "Update a master resume by ID. Returns the updated master resume. Requires scope: resume:write.",
     {
       id: z.string().describe("Master resume ID"),
-      label: z.string().optional().describe("Updated label/name"),
-      rawText: z.string().optional().describe("Updated raw resume text"),
-      isDefault: z.boolean().optional().describe("Set as default master resume"),
+      name: z.string().optional().describe("Updated name/label"),
+      resume: z.record(z.unknown()).optional().describe("Updated resume data object"),
+      metadata: z.record(z.unknown()).optional().describe("Updated metadata"),
     },
     async (params) => {
       try {
         const result = await client.resume.updateMaster(params.id, {
-          label: params.label,
-          rawText: params.rawText,
-          isDefault: params.isDefault,
-        } as any);
+          ...(params.name != null && { name: params.name }),
+          ...(params.resume != null && { resume: params.resume }),
+          ...(params.metadata != null && { metadata: params.metadata }),
+        });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+        return handleToolError(err);
       }
     },
   );
 
   server.tool(
     "master-resume-delete",
-    "Delete a master resume by ID.",
+    "Delete a master resume by ID. Requires scope: resume:write.",
     {
       id: z.string().describe("Master resume ID"),
     },
     async (params) => {
       try {
         await client.resume.deleteMaster(params.id);
-        return { content: [{ type: "text", text: JSON.stringify({ deleted: true, id: params.id }) }] };
+        return { content: [{ type: "text", text: JSON.stringify({ success: true, message: "Master resume deleted", id: params.id }) }] };
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+        return handleToolError(err);
       }
     },
   );

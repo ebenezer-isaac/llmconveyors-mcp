@@ -13,6 +13,8 @@ import { registerContentTools } from "./tools/content.js";
 import { registerSharesTools } from "./tools/shares.js";
 import { registerDocumentTools } from "./tools/documents.js";
 import { registerReferralTools } from "./tools/referral.js";
+import { registerPrivacyTools } from "./tools/privacy.js";
+import { registerHealthTools } from "./tools/health.js";
 
 const apiKey = process.env.LLMC_API_KEY;
 if (!apiKey) {
@@ -20,11 +22,16 @@ if (!apiKey) {
   process.exit(1);
 }
 
-const client = new LLMConveyors({ apiKey });
+if (!apiKey.startsWith("llmc_")) {
+  console.error("Warning: LLMC_API_KEY does not start with 'llmc_' — this may not be a valid LLM Conveyors API key.");
+}
+
+const baseUrl = process.env.LLMC_BASE_URL;
+const client = new LLMConveyors({ apiKey, ...(baseUrl != null && { baseUrl }) });
 
 const server = new McpServer({
   name: "llmconveyors",
-  version: "0.2.1",
+  version: "0.3.0",
 });
 
 // Register all tool groups
@@ -38,6 +45,8 @@ registerContentTools(server, client);
 registerSharesTools(server, client);
 registerDocumentTools(server, client);
 registerReferralTools(server, client);
+registerPrivacyTools(server, client);
+registerHealthTools(server, client);
 
 // Start server
 const transport = new StdioServerTransport();

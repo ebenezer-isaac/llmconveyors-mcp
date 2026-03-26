@@ -109,7 +109,7 @@ Ask your AI agent:
 
 > "Research Stripe and draft a B2B cold email for our developer tools product."
 
-## Available Tools (53)
+## Available Tools (66)
 
 ### Agents
 | Tool | Description |
@@ -118,7 +118,7 @@ Ask your AI agent:
 | `b2b-sales-run` | Run the B2B Sales agent — researches a company and generates sales outreach |
 | `agent-status` | Check the status of a running agent job |
 | `agent-interact` | Submit a response to a phased agent workflow awaiting input |
-| `generate-cv` | Generate a CV synchronously (faster, CV only) |
+| `job-hunter-generate-cv` | Generate a CV synchronously (faster, CV only) |
 | `agent-manifest` | Get input fields, capabilities, and billing info for an agent |
 
 ### Resume
@@ -126,7 +126,7 @@ Ask your AI agent:
 |------|-------------|
 | `resume-parse` | Parse a resume file into structured JSON Resume format |
 | `resume-validate` | Validate a resume in JSON Resume format |
-| `resume-render` | Render a resume to PDF |
+| `resume-render` | Render a resume to PDF or HTML |
 | `resume-preview` | Preview a resume as HTML |
 | `resume-themes` | List available resume themes |
 | `resume-import-rx` | Import from Reactive Resume format |
@@ -146,7 +146,7 @@ Ask your AI agent:
 |------|-------------|
 | `upload-resume` | Upload and parse a resume file (base64) |
 | `upload-job-file` | Upload and parse a job description file (base64) |
-| `upload-job-text` | Parse a job description from plain text |
+| `upload-job-text` | Parse a job description from text or URL |
 
 ### ATS Scoring
 | Tool | Description |
@@ -162,6 +162,8 @@ Ask your AI agent:
 | `session-hydrate` | Get full session with artifacts and logs |
 | `session-download` | Download an artifact from a session by storage key |
 | `session-delete` | Delete a session |
+| `session-init` | Initialize a session with agent context and configuration |
+| `session-log` | Append a log entry to a session |
 
 ### Settings & API Keys
 | Tool | Description |
@@ -187,10 +189,21 @@ Ask your AI agent:
 |------|-------------|
 | `content-save` | Save a source document for AI generation context |
 | `content-delete-generation` | Delete a generation and its artifacts |
+| `content-research-sender` | Research a sender's background for personalized content |
+| `content-list-sources` | List all saved source documents |
+| `content-get-source` | Get a specific source document by ID |
+| `content-delete-source` | Delete a saved source document |
 | `share-create` | Create a public share link for generated content |
 | `share-stats` | Get share link statistics |
 | `share-get-public` | Get a public share by slug |
 | `share-slug-stats` | Get visit statistics for a specific share link |
+
+### Privacy
+| Tool | Description |
+|------|-------------|
+| `privacy-list-consents` | List all consent records for the current user |
+| `privacy-grant-consent` | Grant consent for a specific data processing purpose |
+| `privacy-revoke-consent` | Revoke a previously granted consent |
 
 ### Referral
 | Tool | Description |
@@ -204,6 +217,14 @@ Ask your AI agent:
 |------|-------------|
 | `document-download` | Download an artifact by storage path |
 
+### Health
+| Tool | Description |
+|------|-------------|
+| `health-root` | Get server info and version |
+| `health-check` | Run a full health check on all dependencies |
+| `health-ready` | Check if the server is ready to accept requests |
+| `health-live` | Check if the server process is alive |
+
 ## API Key Scopes
 
 Your API key needs the right scopes for the tools you want to use:
@@ -211,16 +232,27 @@ Your API key needs the right scopes for the tools you want to use:
 | Scope | Tools |
 |-------|-------|
 | `jobs:read` | `agent-status`, `agent-manifest` |
-| `jobs:write` | `job-hunter-run` |
+| `jobs:write` | `job-hunter-run`, `job-hunter-generate-cv` |
 | `sales:write` | `b2b-sales-run` |
 | `sessions:read` | `session-list`, `session-get`, `session-hydrate` |
-| `sessions:write` | `session-create`, `session-delete` |
+| `sessions:write` | `session-create`, `session-delete`, `session-init`, `session-log` |
 | `resume:read` | `resume-themes`, `master-resume-list`, `master-resume-get` |
 | `resume:write` | `resume-validate`, `resume-render`, `resume-preview`, `resume-import-rx`, `resume-export-rx`, `master-resume-create`, `master-resume-update`, `master-resume-delete` |
 | `upload:write` | `upload-resume`, `upload-job-file`, `upload-job-text` |
 | `ats:write` | `ats-score` |
 | `settings:read` | `settings-profile`, `settings-preferences-get`, `settings-usage-summary`, `settings-usage-logs`, `api-key-list` |
 | `settings:write` | `settings-preferences-update`, `api-key-create`, `api-key-revoke`, `api-key-rotate` |
+| `content:read` | `content-list-sources`, `content-get-source` |
+| `content:write` | `content-save`, `content-delete-generation`, `content-research-sender`, `content-delete-source` |
+| `privacy:read` | `privacy-list-consents` |
+| `privacy:write` | `privacy-grant-consent`, `privacy-revoke-consent` |
+
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `LLMC_API_KEY` | Yes | Your LLM Conveyors API key (prefix `llmc_`) |
+| `LLMC_BASE_URL` | No | Custom API endpoint (defaults to `https://api.llmconveyors.com`) |
 
 ## Development
 

@@ -1,22 +1,37 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { LLMConveyors } from "llmconveyors";
 import { z } from "zod";
+import { handleToolError } from "../utils/error-handler.js";
 
 export function registerDocumentTools(server: McpServer, client: LLMConveyors): void {
   server.tool(
     "document-download",
-    "Download a document by its storage path. Returns the file content or a download URL.",
+    "Download a document by its storage path. Returns base64-encoded content for binary files (PDF, DOCX, images) or plain text for text files. Requires scope: sessions:read.",
     {
       path: z.string().describe("Document storage path"),
     },
     async (params) => {
       try {
         const response = await client.documents.download(params.path);
-        const text = await response.text();
-        return { content: [{ type: "text", text }] };
+        if (!response.ok) {
+          return {
+            content: [{ type: "text", text: `Error: HTTP ${response.status} ${response.statusText}` }],
+            isError: true,
+          };
+        }
+        const contentType = response.headers.get("content-type") ?? "";
+        const isText = contentType.startsWith("text/") || contentType.includes("json");
+        if (isText) {
+          const text = await response.text();
+          return { content: [{ type: "text", text }] };
+        }
+        const buffer = Buffer.from(await response.arrayBuffer());
+        const base64 = buffer.toString("base64");
+        return {
+          content: [{ type: "text", text: JSON.stringify({ contentType, encoding: "base64", data: base64 }) }],
+        };
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+        return handleToolError(err);
       }
     },
   );

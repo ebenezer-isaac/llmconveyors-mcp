@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.ebenezer-isaac/llmconveyors",
-  "description": "53 tools for LLM Conveyors: job hunting, B2B sales, ATS scoring, resume tools.",
+  "description": "66 tools for LLM Conveyors: job hunting, B2B sales, ATS scoring, resume tools, content, shares, documents, and more.",
   "repository": {
     "url": "https://github.com/ebenezer-isaac/llmconveyors-mcp",
     "source": "github"
   },
-  "version": "0.2.1",
+  "version": "0.3.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "llmconveyors-mcp",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "transport": {
         "type": "stdio"
       },
