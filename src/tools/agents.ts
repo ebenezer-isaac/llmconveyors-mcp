@@ -139,7 +139,7 @@ export function registerAgentTools(server: McpServer, client: LLMConveyors): voi
   // --- Agent status polling ---
   server.tool(
     "agent-status",
-    "Check the status of a running agent job. Requires scope: jobs:read or sales:read.",
+    "Poll the status of a running agent job to check progress, completion, or if it is awaiting input. Returns status, logs, and artifacts when available. Use this after calling job-hunter-run or b2b-sales-run to monitor the asynchronous job. When status is awaiting_input, use agent-interact to respond. Read-only, no side effects. Requires scope: jobs:read or sales:read.",
     {
       agentType: z.enum(["job-hunter", "b2b-sales"]).describe("Agent type"),
       jobId: z.string().describe("Job ID returned from a generate call"),
@@ -205,7 +205,7 @@ export function registerAgentTools(server: McpServer, client: LLMConveyors): voi
   // --- Agent manifest ---
   server.tool(
     "agent-manifest",
-    "Get the manifest (input fields, capabilities, billing) for an agent type. Requires scope: jobs:read or sales:read.",
+    "Get the manifest for an agent type, describing its input fields, capabilities, supported options, and billing information (credit costs per action). Use this to discover what parameters an agent accepts before running it, or to display pricing information. Read-only, no side effects. Requires scope: jobs:read or sales:read.",
     {
       agentType: z.enum(["job-hunter", "b2b-sales"]).describe("Agent type"),
     },

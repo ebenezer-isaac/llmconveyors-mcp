@@ -6,7 +6,7 @@ import { handleToolError } from "../utils/error-handler.js";
 export function registerSettingsTools(server: McpServer, client: LLMConveyors): void {
   server.tool(
     "settings-profile",
-    "Get the current user's profile. Returns email, name, plan, and credit balance. Requires scope: settings:read.",
+    "Get the current user's profile including email, name, subscription plan, and remaining credit balance. Use this to check available credits before running agents (job-hunter-run, b2b-sales-run) or to verify account identity. Read-only, no side effects. Requires scope: settings:read. For detailed usage breakdown, use settings-usage-summary instead.",
     {},
     async () => {
       try {
@@ -20,7 +20,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "settings-preferences-get",
-    "Get the current user's preferences. Requires scope: settings:read.",
+    "Get the current user's preferences, optionally filtered by agent type. Returns configuration like default themes, generation settings, and notification preferences. Read-only, no side effects. Requires scope: settings:read. Use settings-preferences-update to modify preferences.",
     {
       agentType: z.string().optional().describe("Filter preferences by agent type (e.g. job-hunter, b2b-sales)"),
     },
@@ -38,7 +38,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "settings-preferences-update",
-    "Update the current user's preferences. Returns the updated preferences. Requires scope: settings:write.",
+    "Update the current user's preferences, optionally scoped to a specific agent type. Modifies stored preferences and returns the updated values. Use this to configure default themes, generation settings, or notification preferences. Requires scope: settings:write. Use settings-preferences-get first to see current values before updating.",
     {
       preferences: z.record(z.unknown()).describe("Preferences object to update"),
       agentType: z.string().optional().describe("Agent type to scope preferences to (e.g. job-hunter, b2b-sales)"),
@@ -58,7 +58,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "settings-usage-summary",
-    "Get a summary of the user's API usage and credit consumption. Requires scope: settings:read.",
+    "Get an aggregate summary of the user's API usage and credit consumption, including total credits used, remaining balance, and usage by category. Use this to check credit balance before running agents or to monitor spending. Read-only, no side effects. Requires scope: settings:read. For individual usage entries with timestamps, use settings-usage-logs instead.",
     {},
     async () => {
       try {
@@ -72,7 +72,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "settings-usage-logs",
-    "Get paginated usage logs. Returns individual usage entries with action, credits, and timestamps. Requires scope: settings:read.",
+    "Get paginated usage logs showing individual entries with action type, credits consumed, and timestamps. Use this to audit specific credit charges or investigate unexpected usage. Read-only, no side effects. Requires scope: settings:read. For an aggregate overview, use settings-usage-summary instead.",
     {
       offset: z.number().optional().describe("Offset for pagination"),
       limit: z.number().max(100).optional().describe("Number of entries to return (max 100)"),
@@ -92,7 +92,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "api-key-create",
-    "Create a new platform API key. The key value is shown ONLY in this response -- save it immediately. Requires scope: settings:write.",
+    "Create a new platform API key with specified permission scopes. The key value is returned ONLY in this response and cannot be retrieved later, so save it immediately. Creates a new key record. Requires scope: settings:write. Use api-key-list to see existing keys. Use api-key-revoke to delete keys you no longer need.",
     {
       label: z.string().describe("Human-readable label for the API key"),
       scopes: z.array(z.enum([
@@ -122,7 +122,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "api-key-list",
-    "List all platform API keys. Returns key metadata (hash, name, scopes) -- NOT the key values. Requires scope: settings:read.",
+    "List all platform API keys for the current user. Returns key metadata (hash, label, scopes, creation date) but NOT the actual key values (those are only shown at creation time). Use this to find key hashes for revocation, rotation, or usage queries. Read-only, no side effects. Requires scope: settings:read.",
     {},
     async () => {
       try {
@@ -136,7 +136,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "api-key-revoke",
-    "Revoke (delete) a platform API key by its hash. Requires scope: settings:write.",
+    "Permanently revoke and delete a platform API key by its hash. The key immediately stops working for all API calls. This is irreversible. Use this to remove compromised or unused keys. Requires scope: settings:write. Use api-key-list first to find the key hash. For replacing a key with a new one, use api-key-rotate instead.",
     {
       hash: z.string().describe("API key hash to revoke"),
     },
@@ -152,7 +152,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "api-key-rotate",
-    "Rotate a platform API key -- revokes the old key and returns a new one. Save the new key immediately. Requires scope: settings:write.",
+    "Rotate a platform API key by revoking the old key and issuing a new one. The new key value is returned ONLY in this response, so save it immediately. An optional grace period keeps the old key valid during transition. Use this for periodic key rotation or when a key may be compromised but you need continuity. Requires scope: settings:write. For immediate revocation without replacement, use api-key-revoke instead.",
     {
       hash: z.string().describe("API key hash to rotate"),
       gracePeriodHours: z.number().optional().describe("Hours the old key remains valid after rotation (default: 24)"),
@@ -172,7 +172,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "api-key-usage",
-    "Get usage statistics for a specific API key by its hash. Requires scope: settings:read.",
+    "Get usage statistics for a specific API key by its hash, including request counts and credit consumption. Use this to monitor per-key usage or identify which key is consuming the most credits. Read-only, no side effects. Requires scope: settings:read. Use api-key-list to find key hashes.",
     {
       hash: z.string().describe("API key hash"),
     },
@@ -188,7 +188,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "byo-key-get",
-    "Get the status of all configured BYO provider keys. Returns provider names and their configuration status. Requires scope: settings:read.",
+    "Check the configuration status of all Bring Your Own (BYO) API keys. Returns each provider name and whether a key is configured. Use this to verify BYO key setup before running agents with tier=byo. Read-only, no side effects. Requires scope: settings:read. Use settings-supported-providers to see which providers are available. Use byo-key-set to configure a key.",
     {},
     async () => {
       try {
@@ -202,7 +202,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "byo-key-set",
-    "Set a Bring Your Own API key for a provider (e.g. gemini). BYO tier users get unlimited AI generation but still pay for contact enrichment. Requires scope: settings:write.",
+    "Configure a Bring Your Own (BYO) API key for an AI provider (e.g. gemini). BYO tier users get unlimited AI generation but still pay for contact enrichment credits. Stores the key securely on the platform. Requires scope: settings:write. Use settings-supported-providers to see available providers. Use byo-key-get to check current configuration. Use byo-key-remove to delete a configured key.",
     {
       provider: z.string().describe("Provider name (e.g. gemini)"),
       apiKey: z.string().describe("The API key to set"),
@@ -223,7 +223,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "byo-key-remove",
-    "Remove the configured BYO API key for a provider. Requires scope: settings:write.",
+    "Remove a configured Bring Your Own (BYO) API key for a provider. After removal, agent runs will use platform credits instead of the BYO key. Requires scope: settings:write. Use byo-key-get to check which providers have keys configured before removing.",
     {
       provider: z.string().describe("Provider name to remove the key for (e.g. gemini)"),
     },
@@ -239,7 +239,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "settings-supported-providers",
-    "List supported BYO key providers. Returns provider names and status. Requires scope: settings:read.",
+    "List all AI providers that support Bring Your Own (BYO) API keys, including provider names and availability status. Use this to discover which providers can be configured with byo-key-set before setting up BYO keys. Read-only, no side effects. Requires scope: settings:read.",
     {},
     async () => {
       try {
@@ -253,7 +253,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "webhook-secret-get",
-    "Get the current webhook secret for verifying webhook signatures. Requires scope: webhook:read.",
+    "Get the current webhook signing secret used to verify webhook payloads from the LLM Conveyors platform. Use this when setting up webhook receivers to validate that incoming webhooks are authentic. Read-only, no side effects. Requires scope: webhook:read. Use webhook-secret-rotate to generate a new secret if the current one is compromised.",
     {},
     async () => {
       try {
@@ -267,7 +267,7 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "webhook-secret-rotate",
-    "Rotate the webhook secret. Returns the new secret. The old secret is immediately invalidated. Rate limited: 5 per hour. Requires scope: webhook:write.",
+    "Rotate the webhook signing secret, generating a new one and immediately invalidating the old secret. All existing webhook receivers must be updated with the new secret or they will reject incoming payloads. Rate limited: 5 per hour. Requires scope: webhook:write. Use webhook-secret-get to retrieve the current secret before rotating.",
     {},
     async () => {
       try {

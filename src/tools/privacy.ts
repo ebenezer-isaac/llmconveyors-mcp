@@ -19,7 +19,7 @@ const CONSENT_PURPOSES = [
 export function registerPrivacyTools(server: McpServer, client: LLMConveyors): void {
   server.tool(
     "privacy-list-consents",
-    "List all privacy consent statuses for the current user. Returns consent purposes and their granted/revoked status. Requires scope: settings:read.",
+    "List all privacy consent records for the current user, showing each data processing purpose and whether consent is granted or revoked. Use this to check consent status before running tools that require specific consents (e.g. ai-generation, contact-enrichment). Read-only, no side effects. Requires scope: settings:read.",
     {},
     async () => {
       try {
@@ -33,7 +33,7 @@ export function registerPrivacyTools(server: McpServer, client: LLMConveyors): v
 
   server.tool(
     "privacy-grant-consent",
-    "Grant consent for a specific data processing purpose. Requires scope: settings:write.",
+    "Grant consent for a specific data processing purpose. This enables the platform to process data for that purpose (e.g. ai-generation enables agent runs, contact-enrichment enables contact lookups). Modifies the user's consent record. Requires scope: settings:write. Use privacy-list-consents to check current status first. Use privacy-revoke-consent to undo.",
     {
       purpose: z.enum(CONSENT_PURPOSES).describe("Consent purpose to grant"),
     },
@@ -49,7 +49,7 @@ export function registerPrivacyTools(server: McpServer, client: LLMConveyors): v
 
   server.tool(
     "privacy-revoke-consent",
-    "Revoke consent for a specific data processing purpose. Requires scope: settings:write.",
+    "Revoke a previously granted consent for a specific data processing purpose. This may disable platform features that depend on that consent (e.g. revoking ai-generation prevents agent runs). Modifies the user's consent record. Requires scope: settings:write. Use privacy-list-consents to check current status first.",
     {
       purpose: z.enum(CONSENT_PURPOSES).describe("Consent purpose to revoke"),
     },

@@ -5,7 +5,7 @@ import { handleToolError } from "../utils/error-handler.js";
 export function registerHealthTools(server: McpServer, client: LLMConveyors): void {
   server.tool(
     "health-root",
-    "Get API root info (name, version). Public endpoint, no auth required.",
+    "Get the LLM Conveyors API server name and version. Use this to verify the MCP server is connected and reachable before running other tools. No authentication required. Returns JSON with name and version fields. For deeper diagnostics, use health-check instead.",
     {},
     async () => {
       try {
@@ -19,7 +19,7 @@ export function registerHealthTools(server: McpServer, client: LLMConveyors): vo
 
   server.tool(
     "health-check",
-    "Check API health status — returns status, timestamp, uptime, version, checks, memory. Public endpoint, no auth required.",
+    "Run a detailed health check on the LLM Conveyors API, returning status, uptime, version, dependency checks, and memory usage. Use this to diagnose connectivity or performance issues before retrying failed tool calls. No authentication required. For a simple alive/dead check, use health-live instead.",
     {},
     async () => {
       try {
@@ -33,7 +33,7 @@ export function registerHealthTools(server: McpServer, client: LLMConveyors): vo
 
   server.tool(
     "health-ready",
-    "Check API readiness. Public endpoint, no auth required.",
+    "Check whether the LLM Conveyors API is ready to accept requests (all dependencies initialized). Use this in automation pipelines to wait for readiness before sending agent runs. No authentication required. Returns a simple ready/not-ready status. For process liveness only, use health-live instead.",
     {},
     async () => {
       try {
@@ -47,7 +47,7 @@ export function registerHealthTools(server: McpServer, client: LLMConveyors): vo
 
   server.tool(
     "health-live",
-    "Check API liveness. Public endpoint, no auth required.",
+    "Check whether the LLM Conveyors API process is alive and responding. Use this as a lightweight heartbeat check in monitoring or retry loops. No authentication required. Returns a simple alive status. For dependency-level diagnostics, use health-check instead.",
     {},
     async () => {
       try {

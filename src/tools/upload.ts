@@ -6,7 +6,7 @@ import { handleToolError } from "../utils/error-handler.js";
 export function registerUploadTools(server: McpServer, client: LLMConveyors): void {
   server.tool(
     "upload-resume",
-    "Upload and parse a resume file. Accepts base64-encoded file content. Returns parsed resume data. Requires scope: upload:write.",
+    "Upload a resume file (PDF, DOCX, TXT) as base64-encoded content and parse it into structured data. Returns extracted contact info, work experience, education, and skills. Use this as the first step in a job application workflow before running ats-score or job-hunter-run. Max file size ~10 MB. Requires scope: upload:write. For parsing without the upload step, use resume-parse instead.",
     {
       fileBase64: z.string().max(13_981_014).describe("Base64-encoded file content (PDF, DOCX, etc.) — max ~10 MB"),
       filename: z.string().describe("Original filename with extension (e.g. resume.pdf)"),
@@ -28,7 +28,7 @@ export function registerUploadTools(server: McpServer, client: LLMConveyors): vo
 
   server.tool(
     "upload-job-file",
-    "Upload and parse a job description file. Accepts base64-encoded file content. Returns parsed job data. Requires scope: upload:write.",
+    "Upload a job description file (PDF, DOCX, TXT) as base64-encoded content and parse it into structured job data. Returns extracted job title, requirements, qualifications, and company info. Use this when the job description is in a file rather than plain text. Max file size ~10 MB. Requires scope: upload:write. For plain text or URL-based job descriptions, use upload-job-text instead.",
     {
       fileBase64: z.string().max(13_981_014).describe("Base64-encoded file content (PDF, DOCX, etc.) — max ~10 MB"),
       filename: z.string().describe("Original filename with extension"),
@@ -50,7 +50,7 @@ export function registerUploadTools(server: McpServer, client: LLMConveyors): vo
 
   server.tool(
     "upload-job-text",
-    "Upload a job description as plain text or fetch from a URL. At least one of text or url is required. Returns parsed job data. Requires scope: upload:write.",
+    "Parse a job description from plain text or fetch and parse from a URL. Returns structured job data including title, requirements, and qualifications. Use this when you have the job description as text or a URL to a job posting page. At least one of text or url is required. Requires scope: upload:write. For file-based job descriptions (PDF, DOCX), use upload-job-file instead.",
     {
       text: z.string().max(50_000).optional().describe("Job description text (max 50K characters). Required if url is not provided."),
       url: z.string().url().max(2048).optional().describe("URL to fetch job description from. Required if text is not provided."),

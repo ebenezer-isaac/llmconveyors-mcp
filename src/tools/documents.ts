@@ -6,7 +6,7 @@ import { handleToolError } from "../utils/error-handler.js";
 export function registerDocumentTools(server: McpServer, client: LLMConveyors): void {
   server.tool(
     "document-download",
-    "Download a document by its storage path. Returns base64-encoded content for binary files (PDF, DOCX, images) or plain text for text files. Requires scope: sessions:read.",
+    "Download a document artifact by its storage path. Returns base64-encoded content for binary files (PDF, DOCX, images) or plain text for text files. Use this to retrieve generated artifacts like rendered resumes or reports when you have the storage path. For downloading artifacts from a specific session, use session-download instead (which takes a session ID and artifact key). Read-only, no side effects. Requires scope: sessions:read.",
     {
       path: z.string().describe("Document storage path"),
     },
