@@ -1,6 +1,6 @@
 {
   "name": "llmconveyors-mcp",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "mcpName": "io.github.ebenezer-isaac/llmconveyors",
   "description": "MCP server that connects AI agents to LLM Conveyors — run Job Hunter, B2B Sales, and other AI agents from Claude, Cursor, or any MCP client",
   "type": "module",
@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
-    "llmconveyors": "^0.1.0",
+    "llmconveyors": "^0.3.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {

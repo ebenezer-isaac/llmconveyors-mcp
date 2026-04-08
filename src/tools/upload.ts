@@ -30,7 +30,7 @@ export function registerUploadTools(server: McpServer, client: LLMConveyors): vo
     "upload-job-file",
     "Upload and parse a job description file. Accepts base64-encoded file content. Returns parsed job data. Requires scope: upload:write.",
     {
-      fileBase64: z.string().describe("Base64-encoded file content (PDF, DOCX, etc.)"),
+      fileBase64: z.string().max(13_981_014).describe("Base64-encoded file content (PDF, DOCX, etc.) — max ~10 MB"),
       filename: z.string().describe("Original filename with extension"),
       contentType: z.string().optional().describe("MIME type"),
     },
@@ -53,7 +53,7 @@ export function registerUploadTools(server: McpServer, client: LLMConveyors): vo
     "Upload a job description as plain text or fetch from a URL. At least one of text or url is required. Returns parsed job data. Requires scope: upload:write.",
     {
       text: z.string().max(50_000).optional().describe("Job description text (max 50K characters). Required if url is not provided."),
-      url: z.string().optional().describe("URL to fetch job description from. Required if text is not provided."),
+      url: z.string().url().max(2048).optional().describe("URL to fetch job description from. Required if text is not provided."),
       source: z.string().optional().describe("Source label/identifier for the job posting"),
     },
     async (params) => {
@@ -68,7 +68,7 @@ export function registerUploadTools(server: McpServer, client: LLMConveyors): vo
           ...(params.text != null && { text: params.text }),
           ...(params.url != null && { url: params.url }),
           ...(params.source != null && { source: params.source }),
-        } as any); // TODO: remove as any when SDK adds `url` field to JobTextRequest
+        });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return handleToolError(err);

@@ -8,13 +8,13 @@ export function registerSessionTools(server: McpServer, client: LLMConveyors): v
     "session-create",
     "Create a new session. Returns the created session object with its ID. Requires scope: sessions:write.",
     {
-      agentType: z.enum(["job-hunter", "b2b-sales"]).describe("Agent type for the session"),
+      sessionId: z.string().optional().describe("Optional client-generated session ID"),
       metadata: z.record(z.unknown()).optional().describe("Optional session metadata"),
     },
     async (params) => {
       try {
         const result = await client.sessions.create({
-          agentType: params.agentType,
+          ...(params.sessionId != null && { sessionId: params.sessionId }),
           ...(params.metadata != null && { metadata: params.metadata }),
         });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
@@ -26,18 +26,16 @@ export function registerSessionTools(server: McpServer, client: LLMConveyors): v
 
   server.tool(
     "session-list",
-    "List sessions with optional filtering and pagination. Returns an array of session objects. Requires scope: sessions:read. Note: API may use cursor-based pagination (cursor + limit) — page-based is the current SDK model.",
+    "List sessions with cursor-based pagination. Returns an array of session objects (or paginated envelope when limit is provided). Requires scope: sessions:read.",
     {
-      page: z.number().optional().describe("Page number for pagination"),
-      limit: z.number().optional().describe("Number of sessions per page"),
-      agentType: z.string().optional().describe("Filter by agent type (job-hunter or b2b-sales)"),
+      cursor: z.string().optional().describe("Cursor for pagination (ISO 8601 datetime string)"),
+      limit: z.number().min(1).max(50).optional().describe("Number of sessions per page (1-50)"),
     },
     async (params) => {
       try {
         const result = await client.sessions.list({
-          page: params.page,
-          limit: params.limit,
-          agentType: params.agentType,
+          ...(params.cursor != null && { cursor: params.cursor }),
+          ...(params.limit != null && { limit: params.limit }),
         });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
@@ -156,6 +154,24 @@ export function registerSessionTools(server: McpServer, client: LLMConveyors): v
           role: params.role,
           ...(params.content != null && { content: params.content }),
           ...(params.payload != null && { payload: params.payload }),
+        });
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return handleToolError(err);
+      }
+    },
+  );
+
+  server.tool(
+    "session-stats",
+    "Get session statistics (total sessions, active sequences, emails drafted, reply rate, credits used). Requires scope: sessions:read.",
+    {
+      agentType: z.enum(["job-hunter", "b2b-sales"]).describe("Agent type to get stats for"),
+    },
+    async (params) => {
+      try {
+        const result = await client.sessions.stats({
+          agentType: params.agentType,
         });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {

@@ -16,14 +16,14 @@ MCP server that exposes all LLM Conveyors platform capabilities as 66 tools for 
 src/
   index.ts              — Entry point: creates MCP server, wires up all 12 tool groups
   utils/
-    error-handler.ts    — Shared error handler (LLMConveyorsError, RateLimitError)
+    error-handler.ts    — Shared error handler (LLMConveyorsError, RateLimitError, NetworkError, TimeoutError)
   tools/
     agents.ts           — FULLY IMPLEMENTED (6 tools)
     ats.ts              — FULLY IMPLEMENTED (1 tool)
-    resume.ts           — FULLY IMPLEMENTED (12 tools)
+    resume.ts           — FULLY IMPLEMENTED (10 tools)
     upload.ts           — FULLY IMPLEMENTED (3 tools)
-    sessions.ts         — FULLY IMPLEMENTED (8 tools)
-    settings.ts         — FULLY IMPLEMENTED (15 tools)
+    sessions.ts         — FULLY IMPLEMENTED (9 tools)
+    settings.ts         — FULLY IMPLEMENTED (16 tools)
     content.ts          — FULLY IMPLEMENTED (6 tools)
     shares.ts           — FULLY IMPLEMENTED (4 tools)
     documents.ts        — FULLY IMPLEMENTED (1 tool)
@@ -38,8 +38,9 @@ src/
 
 All tool handlers use `handleToolError(err)` instead of inline try/catch formatting. It:
 
-- Extracts structured fields from `LLMConveyorsError` (code, statusCode, hint, details, requestId, retryable)
-- Extracts `retryAfterMs` and `rateLimitInfo` from `RateLimitError`
+- Extracts structured fields from `LLMConveyorsError` (code, statusCode, hint, details, requestId, retryable, timestamp, path)
+- Extracts `retryAfterSeconds`, `retryAfterMs`, and `rateLimitInfo` from `RateLimitError`
+- Handles `NetworkError` and `TimeoutError` with `retryable: true` signal
 - Falls back to plain error message for unknown errors
 - Always returns `{ content, isError: true }` in MCP format
 
@@ -69,7 +70,7 @@ Reference the `llmconveyors` SDK types (node_modules/llmconveyors/dist/index.d.t
 ### ats.ts (DONE - 1 tool)
 - [x] `ats-score` - Score a resume against a job description
 
-### resume.ts (DONE - 12 tools)
+### resume.ts (DONE - 10 tools)
 - [x] `resume-parse` - Parse a resume from uploaded file
 - [x] `resume-validate` - Validate resume data
 - [x] `resume-render` - Render resume to PDF (returns URL)
@@ -77,28 +78,27 @@ Reference the `llmconveyors` SDK types (node_modules/llmconveyors/dist/index.d.t
 - [x] `resume-themes` - List available resume themes
 - [x] `resume-import-rx` - Import from Reactive Resume format
 - [x] `resume-export-rx` - Export to Reactive Resume format
-- [x] `master-resume-create` - Create a master resume
-- [x] `master-resume-list` - List all master resumes
-- [x] `master-resume-get` - Get a master resume by ID
-- [x] `master-resume-update` - Update a master resume
-- [x] `master-resume-delete` - Delete a master resume
+- [x] `master-resume-get` - Get the user's master resume (singleton)
+- [x] `master-resume-upsert` - Create or replace the user's master resume (singleton)
+- [x] `master-resume-delete` - Delete the user's master resume (singleton)
 
 ### upload.ts (DONE - 3 tools)
 - [x] `upload-resume` - Upload a resume file (base64-encoded)
 - [x] `upload-job-file` - Upload a job description file (base64-encoded)
 - [x] `upload-job-text` - Upload job description as plain text
 
-### sessions.ts (DONE - 8 tools)
+### sessions.ts (DONE - 9 tools)
 - [x] `session-create` - Create a new agent session
-- [x] `session-list` - List sessions with pagination/filtering
+- [x] `session-list` - List sessions with cursor-based pagination
 - [x] `session-get` - Get session by ID
 - [x] `session-hydrate` - Get full session with all artifacts
 - [x] `session-download` - Download session artifacts
 - [x] `session-delete` - Delete a session
 - [x] `session-init` - Initialize a session
 - [x] `session-log` - Log an event to a session
+- [x] `session-stats` - Get session statistics
 
-### settings.ts (DONE - 15 tools)
+### settings.ts (DONE - 16 tools)
 - [x] `settings-profile` - Get user profile
 - [x] `settings-preferences-get` - Get user preferences
 - [x] `settings-preferences-update` - Update user preferences
@@ -109,11 +109,12 @@ Reference the `llmconveyors` SDK types (node_modules/llmconveyors/dist/index.d.t
 - [x] `api-key-revoke` - Revoke an API key
 - [x] `api-key-rotate` - Rotate an API key
 - [x] `api-key-usage` - Get usage stats for an API key
-- [x] `byo-key-get` - Get bring-your-own-key configuration
+- [x] `byo-key-get` - Get BYO provider key status
 - [x] `byo-key-set` - Set a BYO provider key
 - [x] `byo-key-remove` - Remove a BYO provider key
 - [x] `webhook-secret-get` - Get webhook signing secret
 - [x] `webhook-secret-rotate` - Rotate webhook signing secret
+- [x] `settings-supported-providers` - List supported BYO key providers
 
 ### content.ts (DONE - 6 tools)
 - [x] `content-save` - Save generated content
@@ -150,21 +151,18 @@ Reference the `llmconveyors` SDK types (node_modules/llmconveyors/dist/index.d.t
 
 ## SDK Bypasses
 
-Some tools use the SDK's private `httpClient` directly because the public SDK surface does not expose these endpoints:
-
-- **`api-key-usage`** - `GET /api-keys/:hash/usage`
-- **`share-slug-stats`** - `GET /shares/:slug/stats`
-- **`content-delete-generation`** - `DELETE /content/generations/:id`
-
-Additionally, 4 content tools (`content-research-sender`, `content-list-sources`, `content-get-source`, `content-delete-source`) use `httpClient` for endpoints not yet in the SDK.
+None — all tools now use the public SDK surface directly (as of v0.3.1 / SDK v0.3.0).
 
 ## Intentional Omissions
 
 The following SDK capabilities are intentionally not exposed as MCP tools:
 
 - **Streaming (SSE)**: MCP stdio transport is incompatible with server-sent events. Agent runs that support streaming use polling via `agent-status` instead.
-- **Auth export/delete**: Session-only operations that don't make sense in an API-key-authenticated MCP context.
+- **Auth export/delete**: Session-only operations that always return 403 in API-key-authenticated context.
 - **Client-side logging/telemetry**: These are client-side SDK concerns, not server-side tool operations.
+- **Outreach API**: Internal endpoints not exposed in the SDK. Documented in API docs as a leak — to be removed.
+- **`shares.recordVisit`**: Requires Cloudflare Turnstile browser token, not usable from MCP.
+- **Webhook signature verification**: Client-side utility function (`verifyWebhookSignature`), not an API endpoint.
 
 ## Tool naming convention
 - Kebab-case: `resource-action` (e.g., `master-resume-create`, `ats-score`)

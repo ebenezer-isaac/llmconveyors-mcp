@@ -22,12 +22,13 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
     "settings-preferences-get",
     "Get the current user's preferences. Requires scope: settings:read.",
     {
-      agentType: z.string().optional().describe("Filter preferences by agent type (e.g. job-hunter, b2b-sales). Pending SDK support."),
+      agentType: z.string().optional().describe("Filter preferences by agent type (e.g. job-hunter, b2b-sales)"),
     },
     async (params) => {
       try {
-        // TODO: pass agentType once SDK supports it
-        const result = await client.settings.getPreferences();
+        const result = await client.settings.getPreferences(
+          params.agentType != null ? { agentType: params.agentType } as Parameters<typeof client.settings.getPreferences>[0] : undefined,
+        );
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return handleToolError(err);
@@ -40,14 +41,14 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
     "Update the current user's preferences. Returns the updated preferences. Requires scope: settings:write.",
     {
       preferences: z.record(z.unknown()).describe("Preferences object to update"),
-      agentType: z.string().optional().describe("Agent type to scope preferences to (e.g. job-hunter, b2b-sales). Pending SDK support."),
+      agentType: z.string().optional().describe("Agent type to scope preferences to (e.g. job-hunter, b2b-sales)"),
     },
     async (params) => {
       try {
-        // TODO: pass agentType once SDK supports it
-        const result = await client.settings.updatePreferences({
-          preferences: params.preferences,
-        });
+        const result = await client.settings.updatePreferences(
+          params.preferences as Parameters<typeof client.settings.updatePreferences>[0],
+          params.agentType != null ? { agentType: params.agentType } as Parameters<typeof client.settings.updatePreferences>[1] : undefined,
+        );
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return handleToolError(err);
@@ -93,13 +94,13 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
     "api-key-create",
     "Create a new platform API key. The key value is shown ONLY in this response -- save it immediately. Requires scope: settings:write.",
     {
-      name: z.string().describe("Human-readable name for the API key"),
+      label: z.string().describe("Human-readable label for the API key"),
       scopes: z.array(z.enum([
         "*",
         "jobs:write", "jobs:read", "sales:write", "sales:read",
         "sessions:read", "sessions:write", "settings:read", "settings:write",
         "upload:write", "resume:read", "resume:write", "ats:write",
-        "webhook:read", "webhook:write",
+        "webhook:read", "webhook:write", "outreach:read", "outreach:write",
       ])).describe("Permission scopes for the key. Use '*' for all scopes."),
       expiresAt: z.string().optional().describe("Expiration date as ISO 8601 string"),
       monthlyCreditsLimit: z.number().optional().describe("Monthly credit usage cap for this key"),
@@ -107,11 +108,11 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
     async (params) => {
       try {
         const result = await client.settings.createApiKey({
-          name: params.name,
+          label: params.label,
           scopes: params.scopes,
           ...(params.expiresAt != null && { expiresAt: params.expiresAt }),
           ...(params.monthlyCreditsLimit != null && { monthlyCreditsLimit: params.monthlyCreditsLimit }),
-        } as Parameters<typeof client.settings.createApiKey>[0]);
+        });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return handleToolError(err);
@@ -154,30 +155,13 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
     "Rotate a platform API key -- revokes the old key and returns a new one. Save the new key immediately. Requires scope: settings:write.",
     {
       hash: z.string().describe("API key hash to rotate"),
-      gracePeriodHours: z.number().optional().describe("Hours the old key remains valid after rotation (default: 24). Pending SDK support."),
+      gracePeriodHours: z.number().optional().describe("Hours the old key remains valid after rotation (default: 24)"),
     },
     async (params) => {
       try {
-        // TODO: pass gracePeriodHours once SDK supports second arg
-        const result = await client.settings.rotateApiKey(params.hash);
-        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-      } catch (err) {
-        return handleToolError(err);
-      }
-    },
-  );
-
-  server.tool(
-    "api-key-usage",
-    "Get usage statistics for a specific API key by its hash. Requires scope: settings:read. Note: uses direct HTTP (SDK method pending).",
-    {
-      hash: z.string().describe("API key hash"),
-    },
-    async (params) => {
-      try {
-        const httpClient = (client.settings as any).httpClient;
-        const result = await httpClient.request(
-          `/settings/platform-api-keys/${encodeURIComponent(params.hash)}/usage`,
+        const result = await client.settings.rotateApiKey(
+          params.hash,
+          params.gracePeriodHours != null ? { gracePeriodHours: params.gracePeriodHours } : undefined,
         );
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
@@ -187,12 +171,28 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
   );
 
   server.tool(
+    "api-key-usage",
+    "Get usage statistics for a specific API key by its hash. Requires scope: settings:read.",
+    {
+      hash: z.string().describe("API key hash"),
+    },
+    async (params) => {
+      try {
+        const result = await client.settings.getApiKeyUsage(params.hash);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return handleToolError(err);
+      }
+    },
+  );
+
+  server.tool(
     "byo-key-get",
-    "Check if a Bring Your Own API key is configured and its status. Requires scope: settings:read.",
+    "Get the status of all configured BYO provider keys. Returns provider names and their configuration status. Requires scope: settings:read.",
     {},
     async () => {
       try {
-        const result = await client.settings.getByoKey();
+        const result = await client.settings.getProviderKeyStatus();
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return handleToolError(err);
@@ -202,16 +202,17 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "byo-key-set",
-    "Set a Bring Your Own API key for a provider (e.g. Gemini). BYO tier users get unlimited AI generation but still pay for contact enrichment. Requires scope: settings:write.",
+    "Set a Bring Your Own API key for a provider (e.g. gemini). BYO tier users get unlimited AI generation but still pay for contact enrichment. Requires scope: settings:write.",
     {
-      apiKey: z.string().describe("The API key to set"),
       provider: z.string().describe("Provider name (e.g. gemini)"),
+      apiKey: z.string().describe("The API key to set"),
+      baseUrl: z.string().optional().describe("Optional custom base URL for the provider"),
     },
     async (params) => {
       try {
-        const result = await client.settings.setByoKey({
+        const result = await client.settings.setProviderKey(params.provider, {
           apiKey: params.apiKey,
-          provider: params.provider,
+          ...(params.baseUrl != null && { baseUrl: params.baseUrl }),
         });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
@@ -222,12 +223,28 @@ export function registerSettingsTools(server: McpServer, client: LLMConveyors): 
 
   server.tool(
     "byo-key-remove",
-    "Remove the configured Bring Your Own API key. Requires scope: settings:write.",
+    "Remove the configured BYO API key for a provider. Requires scope: settings:write.",
+    {
+      provider: z.string().describe("Provider name to remove the key for (e.g. gemini)"),
+    },
+    async (params) => {
+      try {
+        const result = await client.settings.removeProviderKey(params.provider);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return handleToolError(err);
+      }
+    },
+  );
+
+  server.tool(
+    "settings-supported-providers",
+    "List supported BYO key providers. Returns provider names and status. Requires scope: settings:read.",
     {},
     async () => {
       try {
-        await client.settings.removeByoKey();
-        return { content: [{ type: "text", text: JSON.stringify({ success: true, message: "BYO key removed" }) }] };
+        const result = await client.settings.getSupportedProviders();
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return handleToolError(err);
       }

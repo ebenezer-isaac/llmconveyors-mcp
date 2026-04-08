@@ -6,7 +6,7 @@ import { handleToolError } from "../utils/error-handler.js";
 export function registerSharesTools(server: McpServer, client: LLMConveyors): void {
   server.tool(
     "share-create",
-    "Create a shareable public link for a generation's artifacts. Returns a slug and public URL. Requires scope: sessions:write.",
+    "Create a shareable public link for a generation's artifacts. Returns a slug and public URL. Requires scope: sessions:read.",
     {
       sessionId: z.string().describe("Session ID containing the generation"),
       generationId: z.string().describe("Generation ID to share"),
@@ -16,7 +16,7 @@ export function registerSharesTools(server: McpServer, client: LLMConveyors): vo
         const result = await client.shares.create({
           sessionId: params.sessionId,
           generationId: params.generationId,
-        } as unknown as Parameters<typeof client.shares.create>[0]); // SDK type is Record<string, unknown>, but API accepts typed fields
+        });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return handleToolError(err);
@@ -26,7 +26,7 @@ export function registerSharesTools(server: McpServer, client: LLMConveyors): vo
 
   server.tool(
     "share-stats",
-    "Get statistics about your shared links (view counts, etc.). Requires scope: settings:read.",
+    "Get statistics about your shared links (view counts, etc.). Requires scope: sessions:read.",
     {},
     async () => {
       try {
@@ -56,17 +56,13 @@ export function registerSharesTools(server: McpServer, client: LLMConveyors): vo
 
   server.tool(
     "share-slug-stats",
-    "Get visit statistics for a specific share link (owner only). Requires scope: settings:read. Note: uses direct HTTP (SDK method pending).",
+    "Get visit statistics for a specific share link (owner only). Requires scope: sessions:read.",
     {
       slug: z.string().describe("Share link slug"),
     },
     async (params) => {
       try {
-        // SDK bypass: SharesResource lacks getSlugStats() method
-        const httpClient = (client.shares as any).httpClient;
-        const result = await httpClient.request(
-          `/shares/${encodeURIComponent(params.slug)}/stats`,
-        );
+        const result = await client.shares.getShareStats(params.slug);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return handleToolError(err);

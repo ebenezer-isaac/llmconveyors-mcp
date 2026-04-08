@@ -137,34 +137,12 @@ export function registerResumeTools(server: McpServer, client: LLMConveyors): vo
   );
 
   server.tool(
-    "master-resume-create",
-    "Create a new master resume. Returns the saved master resume with its ID. Requires scope: resume:write.",
-    {
-      name: z.string().describe("Name/label for this master resume"),
-      resume: z.record(z.unknown()).describe("Resume data object (structured JSON Resume or raw text in a wrapper)"),
-      metadata: z.record(z.unknown()).optional().describe("Optional metadata for the master resume"),
-    },
-    async (params) => {
-      try {
-        const result = await client.resume.createMaster({
-          name: params.name,
-          resume: params.resume,
-          ...(params.metadata != null && { metadata: params.metadata }),
-        });
-        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-      } catch (err) {
-        return handleToolError(err);
-      }
-    },
-  );
-
-  server.tool(
-    "master-resume-list",
-    "List all master resumes. Returns an array of master resume objects. Requires scope: resume:read.",
+    "master-resume-get",
+    "Get the user's master resume. Returns the master resume with label, rawText, and structuredData. Requires scope: resume:read.",
     {},
     async () => {
       try {
-        const result = await client.resume.listMasters();
+        const result = await client.resume.getMaster();
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return handleToolError(err);
@@ -173,36 +151,19 @@ export function registerResumeTools(server: McpServer, client: LLMConveyors): vo
   );
 
   server.tool(
-    "master-resume-get",
-    "Get a master resume by ID. Returns the full master resume object. Requires scope: resume:read.",
+    "master-resume-upsert",
+    "Create or replace the user's master resume (upsert). Requires scope: resume:write.",
     {
-      id: z.string().describe("Master resume ID"),
+      label: z.string().describe("Label for the master resume"),
+      rawText: z.string().describe("Raw text content of the resume"),
+      structuredData: z.record(z.unknown()).optional().describe("Optional structured resume data"),
     },
     async (params) => {
       try {
-        const result = await client.resume.getMaster(params.id);
-        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-      } catch (err) {
-        return handleToolError(err);
-      }
-    },
-  );
-
-  server.tool(
-    "master-resume-update",
-    "Update a master resume by ID. Returns the updated master resume. Requires scope: resume:write.",
-    {
-      id: z.string().describe("Master resume ID"),
-      name: z.string().optional().describe("Updated name/label"),
-      resume: z.record(z.unknown()).optional().describe("Updated resume data object"),
-      metadata: z.record(z.unknown()).optional().describe("Updated metadata"),
-    },
-    async (params) => {
-      try {
-        const result = await client.resume.updateMaster(params.id, {
-          ...(params.name != null && { name: params.name }),
-          ...(params.resume != null && { resume: params.resume }),
-          ...(params.metadata != null && { metadata: params.metadata }),
+        const result = await client.resume.upsertMaster({
+          label: params.label,
+          rawText: params.rawText,
+          ...(params.structuredData != null && { structuredData: params.structuredData }),
         });
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
@@ -213,14 +174,12 @@ export function registerResumeTools(server: McpServer, client: LLMConveyors): vo
 
   server.tool(
     "master-resume-delete",
-    "Delete a master resume by ID. Requires scope: resume:write.",
-    {
-      id: z.string().describe("Master resume ID"),
-    },
-    async (params) => {
+    "Delete the user's master resume. Requires scope: resume:write.",
+    {},
+    async () => {
       try {
-        await client.resume.deleteMaster(params.id);
-        return { content: [{ type: "text", text: JSON.stringify({ success: true, message: "Master resume deleted", id: params.id }) }] };
+        const result = await client.resume.deleteMaster();
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return handleToolError(err);
       }
